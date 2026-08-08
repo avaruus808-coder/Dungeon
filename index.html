@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08070a" />
+    <title>DUNGEON — Ensimmäinen laskeutuminen</title>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="grain"></div>
+    <div id="hud" class="hidden">
+      <div class="stat"><span>ELINVOIMA</span><strong id="health">100</strong></div>
+      <div id="message">Etsi syvyyksiin johtava portti.</div>
+      <div class="stat right"><span>TYHJIÖVOIMA</span><strong id="mana">5</strong></div>
+      <div id="crosshair">+</div>
+      <div id="weapon"><span id="weapon-name">RUOSTUNUT TERÄ</span></div>
+      <div id="keys">AVAIMET <strong id="key-count">0</strong></div>
+    </div>
+    <div id="overlay">
+      <div class="panel">
+        <div class="eyebrow">ENSIMMÄINEN LASKEUTUMINEN</div>
+        <h1>DUNGEON</h1>
+        <p id="intro">Kallion alla oleva ovi avautui kolmentoista vuoden hiljaisuuden jälkeen. Kukaan lähetetyistä ei palannut.</p>
+        <button id="start">ASTU LUOLASTOON</button>
+        <div class="controls">WASD liiku · HIIRI katso · SHIFT juokse · VASEN hyökkää · OIKEA tyhjiöisku · E käytä</div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
