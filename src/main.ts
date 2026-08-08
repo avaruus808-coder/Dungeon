@@ -13,16 +13,16 @@ const level = [
   '#.##..#..M....#',
   '#...K.#.......#',
   '###D####.######',
-  '#........#....#',
+  '#..W.....#....#',
   '#K####...#.H..#',
   '#......M.D....#',
   '#.######.#.####',
-  '#.....S..#...X#',
+  '#....AS..#...X#',
   '###############',
 ];
 
 type Enemy = { sprite: THREE.Sprite; health: number; alive: boolean; cooldown: number };
-type Pickup = { mesh: THREE.Mesh; type: 'key' | 'heal' };
+type Pickup = { mesh: THREE.Mesh; type: 'key' | 'item'; itemId?: string };
 
 const gameRoot = document.querySelector<HTMLDivElement>('#game')!;
 const overlay = document.querySelector<HTMLDivElement>('#overlay')!;
@@ -42,6 +42,12 @@ const detailGlyph = document.querySelector<HTMLElement>('#detail-glyph')!;
 const detailName = document.querySelector<HTMLElement>('#detail-name')!;
 const detailCategory = document.querySelector<HTMLElement>('#detail-category')!;
 const detailDescription = document.querySelector<HTMLElement>('#detail-description')!;
+const useItemButton = document.querySelector<HTMLButtonElement>('#use-item')!;
+const equipItemButton = document.querySelector<HTMLButtonElement>('#equip-item')!;
+const dropItemButton = document.querySelector<HTMLButtonElement>('#drop-item')!;
+const equippedWeaponElement = document.querySelector<HTMLButtonElement>('#equipped-weapon')!;
+const equippedArtifactElement = document.querySelector<HTMLButtonElement>('#equipped-artifact')!;
+const weaponNameElement = document.querySelector<HTMLElement>('#weapon-name')!;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0d0b10);
@@ -93,8 +99,10 @@ for (let z = 0; z < level.length; z++) {
     if (cell === '#') addWall(px, pz);
     if (cell === 'P') camera.position.set(px, PLAYER_HEIGHT, pz);
     if (cell === 'M') addEnemy(px, pz);
-    if (cell === 'K') addPickup(px, pz, 'key');
-    if (cell === 'H') addPickup(px, pz, 'heal');
+    if (cell === 'K') addKeyPickup(px, pz);
+    if (cell === 'H') addItemPickup(px, pz, ITEMS.bloodCrystal.id);
+    if (cell === 'W') addItemPickup(px, pz, ITEMS.boneCleaver.id);
+    if (cell === 'A') addItemPickup(px, pz, ITEMS.sealedFragment.id);
     if (cell === 'D') addDoor(px, pz, x, z);
     if (cell === 'X') addPortal(px, pz);
     if (cell === 'S') addRune(px, pz);
@@ -114,6 +122,8 @@ let messageTimer = 0;
 let inventoryOpen = false;
 let selectedInventorySlot: number | null = null;
 const inventory = new Inventory(8);
+let equippedWeaponId = ITEMS.rustedBlade.id;
+let equippedArtifactId: string | null = null;
 const velocity = new THREE.Vector3();
 const clock = new THREE.Clock();
 const raycaster = new THREE.Raycaster();
@@ -156,6 +166,9 @@ document.addEventListener('mousedown', (event) => {
 });
 document.addEventListener('contextmenu', (event) => event.preventDefault());
 closeInventoryButton.addEventListener('click', () => closeInventory());
+useItemButton.addEventListener('click', () => useSelectedItem());
+equipItemButton.addEventListener('click', () => equipSelectedItem());
+dropItemButton.addEventListener('click', () => dropSelectedItem());
 window.addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
@@ -192,13 +205,30 @@ function addEnemy(x: number, z: number) {
   enemies.push({ sprite, health: 45, alive: true, cooldown: 0 });
 }
 
-function addPickup(x: number, z: number, type: 'key' | 'heal') {
-  const geometry = type === 'key' ? new THREE.TorusGeometry(.36, .09, 8, 16) : new THREE.OctahedronGeometry(.48);
-  const material = new THREE.MeshStandardMaterial({ color: type === 'key' ? 0xe2bd55 : 0x9c2f52, emissive: type === 'key' ? 0x6c4a08 : 0x5c1028, emissiveIntensity: 1.5 });
+function addKeyPickup(x: number, z: number) {
+  const geometry = new THREE.TorusGeometry(.36, .09, 8, 16);
+  const material = new THREE.MeshStandardMaterial({ color: 0xe2bd55, emissive: 0x6c4a08, emissiveIntensity: 1.5 });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(x, .75, z);
   scene.add(mesh);
-  pickups.push({ mesh, type });
+  pickups.push({ mesh, type: 'key' });
+}
+
+function addItemPickup(x: number, z: number, itemId: string) {
+  const item = ITEM_BY_ID[itemId];
+  const geometry = item.category === 'weapon'
+    ? new THREE.BoxGeometry(.18, 1.05, .12)
+    : item.category === 'artifact'
+      ? new THREE.DodecahedronGeometry(.46)
+      : new THREE.OctahedronGeometry(.48);
+  const color = item.category === 'weapon' ? 0xc1ad87 : item.category === 'artifact' ? 0x7d55bd : 0x9c2f52;
+  const emissive = item.category === 'weapon' ? 0x413622 : item.category === 'artifact' ? 0x321555 : 0x5c1028;
+  const material = new THREE.MeshStandardMaterial({ color, emissive, emissiveIntensity: 1.5 });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(x, .75, z);
+  if (item.category === 'weapon') mesh.rotation.z = -.6;
+  scene.add(mesh);
+  pickups.push({ mesh, type: 'item', itemId });
 }
 
 function addPortal(x: number, z: number) {
@@ -251,7 +281,8 @@ function meleeAttack() {
   weaponEl.classList.remove('swing');
   void weaponEl.offsetWidth;
   weaponEl.classList.add('swing');
-  hitEnemy(2.25, 24);
+  const damage = ITEM_BY_ID[equippedWeaponId].effect?.meleeDamage ?? 24;
+  hitEnemy(2.25, damage);
 }
 
 function magicAttack() {
@@ -330,9 +361,11 @@ function updatePickups(dt: number) {
     if (pickup.mesh.position.distanceTo(camera.position) < 1.35) {
       if (pickup.type === 'key') { keyCount++; showMessage('Löysit rautaisen avaimen.'); }
       else {
-        const accepted = inventory.add(ITEMS.bloodCrystal.id);
+        const itemId = pickup.itemId;
+        if (!itemId) continue;
+        const accepted = inventory.add(itemId);
         if (!accepted) { showMessage('Inventaario on täynnä.'); continue; }
-        showMessage('Verikristalli lisättiin inventaarioon.');
+        showMessage(`${ITEM_BY_ID[itemId].name} lisättiin inventaarioon.`);
         renderInventory();
       }
       scene.remove(pickup.mesh);
@@ -365,6 +398,12 @@ function closeInventory() {
 }
 
 function renderInventory() {
+  const weapon = ITEM_BY_ID[equippedWeaponId];
+  equippedWeaponElement.querySelector('strong')!.textContent = weapon.name;
+  const artifact = equippedArtifactId ? ITEM_BY_ID[equippedArtifactId] : null;
+  equippedArtifactElement.querySelector('strong')!.textContent = artifact?.name ?? 'Ei varustettu';
+  equippedArtifactElement.classList.toggle('empty', artifact === null);
+  weaponNameElement.textContent = weapon.name.toLocaleUpperCase('fi');
   inventorySlotsElement.replaceChildren();
   inventory.slots.forEach((slot, index) => {
     const button = document.createElement('button');
@@ -398,6 +437,7 @@ function renderInventory() {
     inventorySlotsElement.append(button);
   });
   if (selectedInventorySlot !== null && inventory.get(selectedInventorySlot)) showInventoryDetails(selectedInventorySlot);
+  else clearInventoryDetails();
 }
 
 function showInventoryDetails(index: number) {
@@ -408,6 +448,73 @@ function showInventoryDetails(index: number) {
   detailName.textContent = item.name;
   detailCategory.textContent = item.category.toLocaleUpperCase('fi');
   detailDescription.textContent = item.description;
+  useItemButton.disabled = item.category !== 'consumable';
+  equipItemButton.disabled = item.equipSlot === undefined;
+  dropItemButton.disabled = false;
+}
+
+function clearInventoryDetails() {
+  selectedInventorySlot = null;
+  detailGlyph.textContent = '—';
+  detailName.textContent = 'Valitse esine';
+  detailCategory.textContent = 'TYHJÄ';
+  detailDescription.textContent = 'Kerää luolastosta esineitä ja tarkastele niitä täällä.';
+  useItemButton.disabled = true;
+  equipItemButton.disabled = true;
+  dropItemButton.disabled = true;
+}
+
+function useSelectedItem() {
+  if (selectedInventorySlot === null) return;
+  const slot = inventory.get(selectedInventorySlot);
+  if (!slot) return;
+  const item = ITEM_BY_ID[slot.itemId];
+  if (item.category !== 'consumable' || !item.effect) return;
+  const healthGain = Math.min(item.effect.health ?? 0, 100 - health);
+  const manaGain = Math.min(item.effect.mana ?? 0, 5 - mana);
+  if (healthGain === 0 && manaGain === 0) {
+    inventoryStatus('Voimasi ovat jo täydet.');
+    return;
+  }
+  health += healthGain;
+  mana += manaGain;
+  inventory.remove(selectedInventorySlot, 1);
+  updateHud();
+  renderInventory();
+  inventoryStatus(`${item.name}: +${healthGain} elinvoimaa, +${manaGain} tyhjiövoimaa.`);
+}
+
+function equipSelectedItem() {
+  if (selectedInventorySlot === null) return;
+  const slot = inventory.get(selectedInventorySlot);
+  if (!slot) return;
+  const item = ITEM_BY_ID[slot.itemId];
+  if (!item.equipSlot) return;
+  const removed = inventory.removeAll(selectedInventorySlot);
+  if (!removed) return;
+  const previousItemId = item.equipSlot === 'weapon' ? equippedWeaponId : equippedArtifactId;
+  if (item.equipSlot === 'weapon') equippedWeaponId = item.id;
+  else equippedArtifactId = item.id;
+  if (previousItemId) inventory.add(previousItemId);
+  renderInventory();
+  inventoryStatus(`${item.name} varustettu.`);
+}
+
+function dropSelectedItem() {
+  if (selectedInventorySlot === null) return;
+  const removed = inventory.remove(selectedInventorySlot, 1);
+  if (!removed) return;
+  const forwardX = -Math.sin(yaw);
+  const forwardZ = -Math.cos(yaw);
+  const dropX = camera.position.x + forwardX * 1.45;
+  const dropZ = camera.position.z + forwardZ * 1.45;
+  addItemPickup(dropX, dropZ, removed.itemId);
+  renderInventory();
+  inventoryStatus(`${ITEM_BY_ID[removed.itemId].name} pudotettu.`);
+}
+
+function inventoryStatus(text: string) {
+  detailDescription.textContent = text;
 }
 
 function showMessage(text: string) {
