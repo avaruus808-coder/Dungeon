@@ -33,8 +33,8 @@ const messageEl = document.querySelector<HTMLElement>('#message')!;
 const weaponEl = document.querySelector<HTMLElement>('#weapon')!;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x050407);
-scene.fog = new THREE.FogExp2(0x08060a, 0.052);
+scene.background = new THREE.Color(0x0d0b10);
+scene.fog = new THREE.FogExp2(0x100d12, 0.032);
 
 const camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.1, 120);
 camera.rotation.order = 'YXZ';
@@ -44,8 +44,10 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 gameRoot.appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0x3d3345, 0x130b0b, 0.72));
-const playerLight = new THREE.PointLight(0xd17a50, 2.6, 15, 1.8);
+scene.add(new THREE.HemisphereLight(0x746579, 0x2b2020, 1.35));
+const ambientLight = new THREE.AmbientLight(0x594d58, 0.72);
+scene.add(ambientLight);
+const playerLight = new THREE.PointLight(0xe49a6d, 4.4, 24, 1.45);
 camera.add(playerLight);
 scene.add(camera);
 
@@ -60,8 +62,8 @@ const stoneTexture = makeStoneTexture();
 stoneTexture.wrapS = stoneTexture.wrapT = THREE.RepeatWrapping;
 stoneTexture.magFilter = THREE.NearestFilter;
 stoneTexture.minFilter = THREE.NearestMipmapLinearFilter;
-const wallMaterial = new THREE.MeshStandardMaterial({ map: stoneTexture, roughness: 1, color: 0x8a7a73 });
-const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x282329, roughness: 1 });
+const wallMaterial = new THREE.MeshStandardMaterial({ map: stoneTexture, roughness: 1, color: 0xb0a09a });
+const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x403941, roughness: 1 });
 
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(level[0].length * TILE, level.length * TILE), floorMaterial);
 floor.rotation.x = -Math.PI / 2;
@@ -214,7 +216,7 @@ function updatePlayer(dt: number) {
   if (!collides(nextX)) camera.position.x = nextX.x;
   const nextZ = camera.position.clone(); nextZ.z += velocity.z * dt;
   if (!collides(nextZ)) camera.position.z = nextZ.z;
-  playerLight.intensity = 2.35 + Math.sin(performance.now() * .012) * .25;
+  playerLight.intensity = 4.15 + Math.sin(performance.now() * .012) * .3;
 }
 
 function meleeAttack() {
