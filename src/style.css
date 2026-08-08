@@ -14,6 +14,9 @@ button { cursor: pointer; border: 1px solid #9a654f; padding: 14px 26px; color: 
 button:hover { background: #5b1a25; box-shadow: 0 0 28px rgba(148, 35, 57, .5); }
 .controls { margin-top: 28px; color: #756a66; font-size: 11px; line-height: 1.6; }
 #hud { position: fixed; inset: 0; z-index: 5; pointer-events: none; }
+#minimap-frame { position: absolute; top: 20px; right: 22px; width: 220px; height: 190px; padding-bottom: 20px; overflow: hidden; border: 1px solid rgba(160, 139, 119, .48); background: rgba(8, 7, 10, .68); box-shadow: 0 0 24px rgba(0,0,0,.65), inset 0 0 22px rgba(74, 48, 55, .2); }
+#minimap { width: 220px; height: 170px; display: block; image-rendering: pixelated; opacity: .88; }
+#minimap-frame span { position: absolute; right: 8px; bottom: 5px; color: #766b66; font-size: 9px; letter-spacing: .16em; }
 .stat { position: absolute; left: 24px; bottom: 20px; color: #9f8d7f; font-size: 11px; letter-spacing: .12em; }
 .stat strong { display: block; font-size: 34px; color: #d3c6a6; text-shadow: 0 2px #4c1320; }
 .stat.right { right: 24px; left: auto; text-align: right; }
@@ -27,3 +30,4 @@ button:hover { background: #5b1a25; box-shadow: 0 0 28px rgba(148, 35, 57, .5); 
 #keys { position: absolute; left: 24px; top: 24px; color: #8f8176; font-size: 11px; }
 #keys strong { color: #d6b65f; font-size: 18px; }
 @media (max-width: 700px) { .panel { padding: 36px 18px 28px; } .controls { font-size: 10px; } }
+@media (max-width: 700px) { #minimap-frame { width: 160px; height: 142px; } #minimap { width: 160px; height: 122px; } }
