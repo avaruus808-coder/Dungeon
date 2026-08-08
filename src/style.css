@@ -29,5 +29,31 @@ button:hover { background: #5b1a25; box-shadow: 0 0 28px rgba(148, 35, 57, .5); 
 #weapon-name { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); width: 220px; color: #8f7b69; text-align: center; font-size: 10px; }
 #keys { position: absolute; left: 24px; top: 24px; color: #8f8176; font-size: 11px; }
 #keys strong { color: #d6b65f; font-size: 18px; }
+#inventory-hint { position: absolute; right: 24px; bottom: 20px; transform: translateY(-58px); color: #756b67; font-size: 10px; letter-spacing: .1em; }
+kbd { display: inline-block; border: 1px solid #776961; padding: 2px 5px; color: #c6b49c; background: #171218; font: inherit; font-size: .9em; }
+#inventory { position: fixed; inset: 0; z-index: 9; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at 50% 45%, rgba(45, 28, 37, .8), rgba(4, 3, 6, .94)); }
+.inventory-panel { width: min(920px, 100%); border: 1px solid #655054; background: rgba(12, 10, 13, .97); box-shadow: 0 0 70px #000, inset 0 0 55px rgba(74, 37, 48, .13); }
+.inventory-panel header { display: flex; align-items: center; justify-content: space-between; padding: 23px 27px 18px; border-bottom: 1px solid #3d3034; }
+.inventory-eyebrow { color: #846f68; font-size: 9px; letter-spacing: .28em; }
+.inventory-panel h2 { margin: 3px 0 0; color: #d6c5a7; font: 700 30px/1 Georgia, serif; letter-spacing: .08em; }
+.inventory-panel header button { padding: 8px 12px; border-color: #53474a; color: #8e8179; background: transparent; font-size: 10px; }
+.inventory-body { display: grid; grid-template-columns: minmax(320px, 1.25fr) minmax(260px, .75fr); min-height: 370px; }
+.inventory-slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-content: start; padding: 28px; border-right: 1px solid #3d3034; }
+.inventory-slot { position: relative; aspect-ratio: 1; min-height: 112px; border: 1px solid #40363a; color: #81746e; background: linear-gradient(145deg, rgba(50,39,44,.46), rgba(15,12,16,.75)); font: inherit; letter-spacing: 0; padding: 10px; }
+.inventory-slot:hover, .inventory-slot.selected { border-color: #a48671; background: linear-gradient(145deg, rgba(83,58,62,.58), rgba(24,17,23,.88)); box-shadow: inset 0 0 22px rgba(131,73,80,.18); }
+.inventory-slot.empty { cursor: default; opacity: .42; }
+.slot-number { position: absolute; top: 6px; left: 8px; font-size: 9px; color: #5f5553; }
+.slot-glyph { display: grid; place-items: center; height: 60%; color: #d0b78d; font: 38px Georgia, serif; text-shadow: 0 0 16px #733141; }
+.slot-name { display: block; overflow: hidden; color: #b9a99b; font-size: 9px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.slot-quantity { position: absolute; right: 8px; bottom: 7px; color: #e1c695; font-size: 12px; }
+#item-details { padding: 32px 30px; }
+#detail-glyph { height: 86px; color: #d0b78d; font: 68px/1 Georgia, serif; text-shadow: 0 0 22px #733141; }
+#item-details h3 { margin: 12px 0 5px; color: #d2c4ad; font: 24px Georgia, serif; }
+#detail-category { color: #8f6e64; font-size: 9px; letter-spacing: .18em; }
+#detail-description { min-height: 96px; color: #938983; font-size: 12px; line-height: 1.65; }
+.locked-actions { margin-top: 25px; padding: 11px; border: 1px dashed #44383d; color: #5f5454; font-size: 10px; line-height: 1.7; text-align: center; }
+.locked-actions small { color: #493f41; }
+.inventory-panel footer { padding: 12px 27px; border-top: 1px solid #3d3034; color: #5f5654; font-size: 9px; }
 @media (max-width: 700px) { .panel { padding: 36px 18px 28px; } .controls { font-size: 10px; } }
 @media (max-width: 700px) { #minimap-frame { width: 160px; height: 142px; } #minimap { width: 160px; height: 122px; } }
+@media (max-width: 700px) { .inventory-body { grid-template-columns: 1fr; } .inventory-slots { grid-template-columns: repeat(4, 1fr); border-right: 0; border-bottom: 1px solid #3d3034; } .inventory-slot { min-height: 74px; } #item-details { display: none; } }
