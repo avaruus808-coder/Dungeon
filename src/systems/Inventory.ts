@@ -38,4 +38,20 @@ export class Inventory {
   get(index: number) {
     return this.slots[index] ?? null;
   }
+
+  remove(index: number, quantity = 1): InventorySlot | null {
+    const slot = this.get(index);
+    if (!slot || quantity < 1) return null;
+    const removed = { itemId: slot.itemId, quantity: Math.min(quantity, slot.quantity) };
+    slot.quantity -= removed.quantity;
+    if (slot.quantity <= 0) this.slots[index] = null;
+    return removed;
+  }
+
+  removeAll(index: number): InventorySlot | null {
+    const slot = this.get(index);
+    if (!slot) return null;
+    this.slots[index] = null;
+    return { ...slot };
+  }
 }
