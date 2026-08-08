@@ -20,6 +20,26 @@
       <div id="crosshair">+</div>
       <div id="weapon"><span id="weapon-name">RUOSTUNUT TERÄ</span></div>
       <div id="keys">AVAIMET <strong id="key-count">0</strong></div>
+      <div id="inventory-hint"><kbd>TAB</kbd> INVENTAARIO</div>
+    </div>
+    <div id="inventory" class="hidden" aria-label="Inventaario">
+      <div class="inventory-panel">
+        <header>
+          <div><span class="inventory-eyebrow">KANTAMUKSET</span><h2>INVENTAARIO</h2></div>
+          <button id="close-inventory" type="button">SULJE <kbd>TAB</kbd></button>
+        </header>
+        <div class="inventory-body">
+          <div id="inventory-slots" class="inventory-slots"></div>
+          <aside id="item-details">
+            <div id="detail-glyph">—</div>
+            <h3 id="detail-name">Valitse esine</h3>
+            <span id="detail-category">TYHJÄ</span>
+            <p id="detail-description">Kerää luolastosta esineitä ja tarkastele niitä täällä.</p>
+            <div class="locked-actions">KÄYTÄ · VARUSTA · PUDOTA<br><small>Avataan seuraavassa kehitysvaiheessa</small></div>
+          </aside>
+        </div>
+        <footer>Avaimet ja tarinan kannalta välttämättömät kulkuluvat eivät vie tavarapaikkoja.</footer>
+      </div>
     </div>
     <div id="overlay">
       <div class="panel">
