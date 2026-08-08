@@ -31,6 +31,8 @@ const manaEl = document.querySelector<HTMLElement>('#mana')!;
 const keyEl = document.querySelector<HTMLElement>('#key-count')!;
 const messageEl = document.querySelector<HTMLElement>('#message')!;
 const weaponEl = document.querySelector<HTMLElement>('#weapon')!;
+const minimap = document.querySelector<HTMLCanvasElement>('#minimap')!;
+const minimapCtx = minimap.getContext('2d')!;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0d0b10);
@@ -323,6 +325,83 @@ function updateHud() {
   keyEl.textContent = String(keyCount);
 }
 
+function drawMinimap() {
+  const width = minimap.width;
+  const height = minimap.height;
+  const centerX = width / 2;
+  const centerY = height * .72;
+  const pixelsPerWorldUnit = 6.4;
+  const scanRange = TILE * 4.35;
+  const forward = new THREE.Vector2(-Math.sin(yaw), -Math.cos(yaw));
+  const right = new THREE.Vector2(Math.cos(yaw), -Math.sin(yaw));
+
+  minimapCtx.clearRect(0, 0, width, height);
+  const vignette = minimapCtx.createRadialGradient(centerX, centerY, 10, centerX, centerY, Math.max(width, height) * .65);
+  vignette.addColorStop(0, 'rgba(42, 35, 40, .86)');
+  vignette.addColorStop(.72, 'rgba(14, 12, 16, .72)');
+  vignette.addColorStop(1, 'rgba(4, 3, 6, 0)');
+  minimapCtx.fillStyle = vignette;
+  minimapCtx.fillRect(0, 0, width, height);
+
+  const toScreen = (worldX: number, worldZ: number) => {
+    const dx = worldX - camera.position.x;
+    const dz = worldZ - camera.position.z;
+    const sideDistance = dx * right.x + dz * right.y;
+    const forwardDistance = dx * forward.x + dz * forward.y;
+    return {
+      x: centerX + sideDistance * pixelsPerWorldUnit,
+      y: centerY - forwardDistance * pixelsPerWorldUnit,
+    };
+  };
+
+  for (let gridZ = 0; gridZ < level.length; gridZ++) {
+    for (let gridX = 0; gridX < level[gridZ].length; gridX++) {
+      const worldX = gridX * TILE;
+      const worldZ = gridZ * TILE;
+      const dx = worldX - camera.position.x;
+      const dz = worldZ - camera.position.z;
+      const distance = Math.hypot(dx, dz);
+      const forwardDistance = dx * forward.x + dz * forward.y;
+      if (distance > scanRange || forwardDistance < -TILE * 1.15) continue;
+
+      const fade = THREE.MathUtils.clamp(1 - distance / scanRange, .12, .78);
+      minimapCtx.beginPath();
+      for (let corner = 0; corner < 4; corner++) {
+        const cornerX = worldX + (corner === 0 || corner === 3 ? -TILE / 2 : TILE / 2);
+        const cornerZ = worldZ + (corner < 2 ? -TILE / 2 : TILE / 2);
+        const point = toScreen(cornerX, cornerZ);
+        if (corner === 0) minimapCtx.moveTo(point.x, point.y);
+        else minimapCtx.lineTo(point.x, point.y);
+      }
+      minimapCtx.closePath();
+      if (level[gridZ][gridX] === '#') {
+        minimapCtx.fillStyle = `rgba(165, 149, 138, ${fade})`;
+        minimapCtx.fill();
+        minimapCtx.strokeStyle = `rgba(215, 195, 174, ${fade * .55})`;
+        minimapCtx.lineWidth = 1;
+        minimapCtx.stroke();
+      } else {
+        minimapCtx.fillStyle = `rgba(57, 49, 55, ${fade * .68})`;
+        minimapCtx.fill();
+      }
+    }
+  }
+
+  minimapCtx.save();
+  minimapCtx.translate(centerX, centerY);
+  minimapCtx.fillStyle = '#d8c7a4';
+  minimapCtx.shadowColor = '#d8c7a4';
+  minimapCtx.shadowBlur = 5;
+  minimapCtx.beginPath();
+  minimapCtx.moveTo(0, -11);
+  minimapCtx.lineTo(7, 7);
+  minimapCtx.lineTo(0, 3);
+  minimapCtx.lineTo(-7, 7);
+  minimapCtx.closePath();
+  minimapCtx.fill();
+  minimapCtx.restore();
+}
+
 function endGame(victory: boolean) {
   ended = true;
   running = false;
@@ -384,6 +463,7 @@ function animate() {
       if (messageTimer <= 0) messageEl.classList.remove('show');
     }
   }
+  drawMinimap();
   renderer.render(scene, camera);
 }
 
