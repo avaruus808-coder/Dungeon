@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import './style.css';
+import { ITEM_BY_ID, ITEMS } from './data/items';
+import { Inventory } from './systems/Inventory';
 
 const TILE = 4;
 const PLAYER_RADIUS = 0.55;
@@ -33,6 +35,13 @@ const messageEl = document.querySelector<HTMLElement>('#message')!;
 const weaponEl = document.querySelector<HTMLElement>('#weapon')!;
 const minimap = document.querySelector<HTMLCanvasElement>('#minimap')!;
 const minimapCtx = minimap.getContext('2d')!;
+const inventoryElement = document.querySelector<HTMLDivElement>('#inventory')!;
+const inventorySlotsElement = document.querySelector<HTMLDivElement>('#inventory-slots')!;
+const closeInventoryButton = document.querySelector<HTMLButtonElement>('#close-inventory')!;
+const detailGlyph = document.querySelector<HTMLElement>('#detail-glyph')!;
+const detailName = document.querySelector<HTMLElement>('#detail-name')!;
+const detailCategory = document.querySelector<HTMLElement>('#detail-category')!;
+const detailDescription = document.querySelector<HTMLElement>('#detail-description')!;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0d0b10);
@@ -102,6 +111,9 @@ let running = false;
 let ended = false;
 let attackCooldown = 0;
 let messageTimer = 0;
+let inventoryOpen = false;
+let selectedInventorySlot: number | null = null;
+const inventory = new Inventory(8);
 const velocity = new THREE.Vector3();
 const clock = new THREE.Clock();
 const raycaster = new THREE.Raycaster();
@@ -112,6 +124,11 @@ startButton.addEventListener('click', () => {
 });
 document.addEventListener('pointerlockchange', () => {
   running = document.pointerLockElement === renderer.domElement;
+  if (inventoryOpen) {
+    overlay.classList.add('hidden');
+    hud.classList.remove('hidden');
+    return;
+  }
   overlay.classList.toggle('hidden', running);
   hud.classList.toggle('hidden', !running && !ended);
 });
@@ -122,6 +139,12 @@ document.addEventListener('mousemove', (event) => {
   pitch = THREE.MathUtils.clamp(pitch, -1.35, 1.35);
 });
 document.addEventListener('keydown', (event) => {
+  if (event.code === 'Tab' && !ended) {
+    event.preventDefault();
+    toggleInventory();
+    return;
+  }
+  if (inventoryOpen) return;
   keys.add(event.code);
   if (event.code === 'KeyE' && running) interact();
 });
@@ -132,6 +155,7 @@ document.addEventListener('mousedown', (event) => {
   if (event.button === 2) magicAttack();
 });
 document.addEventListener('contextmenu', (event) => event.preventDefault());
+closeInventoryButton.addEventListener('click', () => closeInventory());
 window.addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
@@ -305,12 +329,85 @@ function updatePickups(dt: number) {
     pickup.mesh.position.y = .75 + Math.sin(performance.now() * .003 + i) * .12;
     if (pickup.mesh.position.distanceTo(camera.position) < 1.35) {
       if (pickup.type === 'key') { keyCount++; showMessage('Löysit rautaisen avaimen.'); }
-      else { health = Math.min(100, health + 38); mana = Math.min(5, mana + 2); showMessage('Verikristalli palauttaa voimiasi.'); }
+      else {
+        const accepted = inventory.add(ITEMS.bloodCrystal.id);
+        if (!accepted) { showMessage('Inventaario on täynnä.'); continue; }
+        showMessage('Verikristalli lisättiin inventaarioon.');
+        renderInventory();
+      }
       scene.remove(pickup.mesh);
       pickups.splice(i, 1);
       updateHud();
     }
   }
+}
+
+function toggleInventory() {
+  if (inventoryOpen) closeInventory();
+  else openInventory();
+}
+
+function openInventory() {
+  inventoryOpen = true;
+  running = false;
+  keys.clear();
+  document.exitPointerLock();
+  overlay.classList.add('hidden');
+  hud.classList.remove('hidden');
+  inventoryElement.classList.remove('hidden');
+  renderInventory();
+}
+
+function closeInventory() {
+  inventoryOpen = false;
+  inventoryElement.classList.add('hidden');
+  renderer.domElement.requestPointerLock();
+}
+
+function renderInventory() {
+  inventorySlotsElement.replaceChildren();
+  inventory.slots.forEach((slot, index) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `inventory-slot${slot ? '' : ' empty'}${selectedInventorySlot === index ? ' selected' : ''}`;
+    const number = document.createElement('span');
+    number.className = 'slot-number';
+    number.textContent = String(index + 1).padStart(2, '0');
+    button.append(number);
+    if (slot) {
+      const item = ITEM_BY_ID[slot.itemId];
+      const glyph = document.createElement('span');
+      glyph.className = 'slot-glyph';
+      glyph.textContent = item.glyph;
+      const name = document.createElement('span');
+      name.className = 'slot-name';
+      name.textContent = item.name;
+      button.append(glyph, name);
+      if (slot.quantity > 1) {
+        const quantity = document.createElement('span');
+        quantity.className = 'slot-quantity';
+        quantity.textContent = String(slot.quantity);
+        button.append(quantity);
+      }
+      button.addEventListener('click', () => {
+        selectedInventorySlot = index;
+        renderInventory();
+        showInventoryDetails(index);
+      });
+    }
+    inventorySlotsElement.append(button);
+  });
+  if (selectedInventorySlot !== null && inventory.get(selectedInventorySlot)) showInventoryDetails(selectedInventorySlot);
+}
+
+function showInventoryDetails(index: number) {
+  const slot = inventory.get(index);
+  if (!slot) return;
+  const item = ITEM_BY_ID[slot.itemId];
+  detailGlyph.textContent = item.glyph;
+  detailName.textContent = item.name;
+  detailCategory.textContent = item.category.toLocaleUpperCase('fi');
+  detailDescription.textContent = item.description;
 }
 
 function showMessage(text: string) {
