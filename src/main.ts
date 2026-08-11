@@ -52,8 +52,8 @@ const equippedArtifactElement = document.querySelector<HTMLButtonElement>('#equi
 const weaponNameElement = document.querySelector<HTMLElement>('#weapon-name')!;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0d0b10);
-scene.fog = new THREE.FogExp2(0x100d12, 0.032);
+scene.background = new THREE.Color(0x101722);
+scene.fog = new THREE.FogExp2(0x172433, 0.027);
 
 const camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.1, 120);
 camera.rotation.order = 'YXZ';
@@ -63,8 +63,8 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 gameRoot.appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0x746579, 0x2b2020, 1.35));
-const ambientLight = new THREE.AmbientLight(0x594d58, 0.72);
+scene.add(new THREE.HemisphereLight(0x788aa4, 0x202c3b, 1.65));
+const ambientLight = new THREE.AmbientLight(0x61728b, 0.92);
 scene.add(ambientLight);
 const playerLight = new THREE.PointLight(0xe49a6d, 4.4, 24, 1.45);
 camera.add(playerLight);
@@ -117,6 +117,8 @@ for (let z = 0; z < level.length; z++) {
 
 addAncientTechRelics();
 addFluorescentFixtures();
+addGroundGlow();
+const dungeonMist = addDungeonMist();
 
 const keys = new Set<string>();
 let yaw = 0;
@@ -682,6 +684,58 @@ function addFluorescentFixture(x: number, z: number, rotationY: number, phase: n
   flickeringFixtures.push({ light, tubeMaterial, phase });
 }
 
+function addGroundGlow() {
+  const glowPositions: Array<[number, number]> = [
+    [8, 4], [16, 12], [24, 20], [8, 28], [28, 28], [44, 28], [16, 36], [48, 36],
+  ];
+  const glowMaterial = new THREE.MeshBasicMaterial({
+    color: 0x347ad1,
+    transparent: true,
+    opacity: .16,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+  for (const [x, z] of glowPositions) {
+    const pool = new THREE.Mesh(new THREE.CircleGeometry(3.1, 24), glowMaterial);
+    pool.rotation.x = -Math.PI / 2;
+    pool.position.set(x, .025, z);
+    scene.add(pool);
+    const light = new THREE.PointLight(0x418ee8, 4.1, 15, 1.7);
+    light.position.set(x, .28, z);
+    scene.add(light);
+  }
+}
+
+function addDungeonMist() {
+  const positions: number[] = [];
+  for (let z = 1; z < level.length - 1; z++) {
+    for (let x = 1; x < level[z].length - 1; x++) {
+      if (level[z][x] === '#') continue;
+      for (let particle = 0; particle < 2; particle++) {
+        positions.push(
+          x * TILE + (Math.random() - .5) * TILE,
+          .18 + Math.random() * 1.35,
+          z * TILE + (Math.random() - .5) * TILE,
+        );
+      }
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  const material = new THREE.PointsMaterial({
+    color: 0x8ca9bf,
+    size: .5,
+    transparent: true,
+    opacity: .075,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true,
+  });
+  const mist = new THREE.Points(geometry, material);
+  scene.add(mist);
+  return mist;
+}
+
 function updateFluorescentFixtures(time: number) {
   for (const fixture of flickeringFixtures) {
     const pulse = Math.sin(time * 17 + fixture.phase) * .12 + Math.sin(time * 43 + fixture.phase * 2.3) * .06;
@@ -756,7 +810,10 @@ function makeEnemyTexture() {
 function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), .05);
-  updateFluorescentFixtures(performance.now() * .001);
+  const elapsed = performance.now() * .001;
+  updateFluorescentFixtures(elapsed);
+  dungeonMist.position.y = Math.sin(elapsed * .22) * .08;
+  dungeonMist.rotation.y = Math.sin(elapsed * .045) * .012;
   if (running && !ended) {
     attackCooldown -= dt;
     updatePlayer(dt);
