@@ -23,9 +23,15 @@ button:hover { background: #5b1a25; box-shadow: 0 0 28px rgba(148, 35, 57, .5); 
 #message { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); min-width: 300px; padding: 8px 16px; color: #d8c5a0; background: rgba(0,0,0,.45); text-align: center; opacity: 0; transition: opacity .2s; }
 #message.show { opacity: 1; }
 #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(221, 200, 165, .7); font-size: 22px; }
-#weapon { position: absolute; bottom: -54px; left: 50%; width: min(48vw, 510px); height: min(48vw, 510px); transform: translateX(-50%); background: var(--weapon-image) center bottom / contain no-repeat; filter: drop-shadow(0 8px 12px #000) drop-shadow(0 0 10px rgba(111, 62, 157, .32)); transform-origin: 36% 88%; }
-#weapon.swing { animation: swing .22s ease-in-out; }
-@keyframes swing { 50% { transform: translateX(-50%) rotate(18deg) translate(38px, 18px); filter: drop-shadow(0 8px 12px #000) drop-shadow(0 0 18px rgba(146, 79, 209, .62)); } }
+#weapon { position: absolute; bottom: -54px; left: 50%; width: min(48vw, 510px); height: min(48vw, 510px); transform: translateX(-50%); background: var(--weapon-image) center bottom / contain no-repeat; filter: drop-shadow(0 8px 12px #000) drop-shadow(0 0 10px rgba(111, 62, 157, .32)); transform-origin: 28% 86%; will-change: transform, filter; }
+#weapon.swing { animation: slash .46s cubic-bezier(.2,.72,.22,1); }
+@keyframes slash {
+  0% { transform: translateX(-50%) rotate(0); }
+  16% { transform: translateX(calc(-50% - 72px)) translateY(34px) rotate(-24deg); }
+  48% { transform: translateX(calc(-50% + 118px)) translateY(-94px) rotate(64deg) scale(.94); filter: drop-shadow(0 8px 12px #000) drop-shadow(0 0 26px rgba(164, 91, 229, .82)); }
+  68% { transform: translateX(calc(-50% + 162px)) translateY(22px) rotate(82deg) scale(.9); }
+  100% { transform: translateX(-50%) rotate(0); }
+}
 #weapon-name { position: absolute; bottom: 64px; left: 25%; transform: translateX(-50%); width: 220px; color: #a88bc0; text-align: center; font-size: 10px; text-shadow: 0 1px 3px #000, 0 0 8px #5e347c; }
 #keys { position: absolute; left: 24px; top: 24px; color: #8f8176; font-size: 11px; }
 #keys strong { color: #d6b65f; font-size: 18px; }

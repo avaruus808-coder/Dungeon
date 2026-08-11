@@ -23,6 +23,7 @@ const level = [
 
 type Enemy = { sprite: THREE.Sprite; health: number; alive: boolean; cooldown: number };
 type Pickup = { mesh: THREE.Mesh; type: 'key' | 'item'; itemId?: string };
+type FlickeringFixture = { light: THREE.PointLight; tubeMaterial: THREE.MeshStandardMaterial; phase: number };
 
 const gameRoot = document.querySelector<HTMLDivElement>('#game')!;
 const overlay = document.querySelector<HTMLDivElement>('#overlay')!;
@@ -74,6 +75,7 @@ const wallMeshes: THREE.Mesh[] = [];
 const enemies: Enemy[] = [];
 const pickups: Pickup[] = [];
 const doors: THREE.Mesh[] = [];
+const flickeringFixtures: FlickeringFixture[] = [];
 let portal: THREE.Mesh | null = null;
 
 const wallTexture = loadGameTexture('textures/ancient-tech-wall.webp');
@@ -114,6 +116,7 @@ for (let z = 0; z < level.length; z++) {
 }
 
 addAncientTechRelics();
+addFluorescentFixtures();
 
 const keys = new Set<string>();
 let yaw = 0;
@@ -283,7 +286,7 @@ function updatePlayer(dt: number) {
 
 function meleeAttack() {
   if (attackCooldown > 0) return;
-  attackCooldown = .38;
+  attackCooldown = .48;
   weaponEl.classList.remove('swing');
   void weaponEl.offsetWidth;
   weaponEl.classList.add('swing');
@@ -644,6 +647,51 @@ function addAncientTechRelics() {
   addCableBundle(21.92, 1.3, 11.2, -Math.PI / 2);
 }
 
+function addFluorescentFixtures() {
+  addFluorescentFixture(12, 4, 0, .3);
+  addFluorescentFixture(16, 12, Math.PI / 2, 1.8);
+  addFluorescentFixture(24, 20, 0, 3.5);
+  addFluorescentFixture(12, 28, 0, 5.2);
+  addFluorescentFixture(44, 28, Math.PI / 2, 2.6);
+  addFluorescentFixture(20, 36, 0, 4.4);
+}
+
+function addFluorescentFixture(x: number, z: number, rotationY: number, phase: number) {
+  const fixture = new THREE.Group();
+  const housing = new THREE.Mesh(
+    new THREE.BoxGeometry(2.35, .12, .42),
+    new THREE.MeshStandardMaterial({ color: 0x252928, roughness: .7, metalness: .62 }),
+  );
+  const tubeMaterial = new THREE.MeshStandardMaterial({
+    color: 0xc8d5ca,
+    emissive: 0xb9d8c8,
+    emissiveIntensity: 2.2,
+    roughness: .38,
+  });
+  const tube = new THREE.Mesh(new THREE.CylinderGeometry(.055, .055, 1.92, 8), tubeMaterial);
+  tube.rotation.z = Math.PI / 2;
+  tube.position.y = -.09;
+  fixture.add(housing, tube);
+  fixture.position.set(x, 3.62, z);
+  fixture.rotation.y = rotationY;
+  scene.add(fixture);
+
+  const light = new THREE.PointLight(0xc7e6d4, 5.2, 13, 1.8);
+  light.position.set(x, 3.15, z);
+  scene.add(light);
+  flickeringFixtures.push({ light, tubeMaterial, phase });
+}
+
+function updateFluorescentFixtures(time: number) {
+  for (const fixture of flickeringFixtures) {
+    const pulse = Math.sin(time * 17 + fixture.phase) * .12 + Math.sin(time * 43 + fixture.phase * 2.3) * .06;
+    const dropout = Math.sin(time * 3.1 + fixture.phase) > .965 && Math.sin(time * 61 + fixture.phase) > .15;
+    const strength = dropout ? .08 : 1 + pulse;
+    fixture.light.intensity = 5.2 * strength;
+    fixture.tubeMaterial.emissiveIntensity = .35 + 1.85 * strength;
+  }
+}
+
 function addDeadDisplay(x: number, y: number, z: number, rotationY: number) {
   const group = new THREE.Group();
   const frame = new THREE.Mesh(
@@ -708,6 +756,7 @@ function makeEnemyTexture() {
 function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), .05);
+  updateFluorescentFixtures(performance.now() * .001);
   if (running && !ended) {
     attackCooldown -= dt;
     updatePlayer(dt);
