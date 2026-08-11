@@ -75,18 +75,21 @@ const pickups: Pickup[] = [];
 const doors: THREE.Mesh[] = [];
 let portal: THREE.Mesh | null = null;
 
-const stoneTexture = makeStoneTexture();
-stoneTexture.wrapS = stoneTexture.wrapT = THREE.RepeatWrapping;
-stoneTexture.magFilter = THREE.NearestFilter;
-stoneTexture.minFilter = THREE.NearestMipmapLinearFilter;
-const wallMaterial = new THREE.MeshStandardMaterial({ map: stoneTexture, roughness: 1, color: 0xb0a09a });
-const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x403941, roughness: 1 });
+const wallTexture = loadGameTexture('textures/ancient-tech-wall.webp');
+const floorTexture = loadGameTexture('textures/ancient-tech-floor.webp', level[0].length / 2, level.length / 2);
+const ceilingTexture = loadGameTexture('textures/ancient-tech-floor.webp', level[0].length / 2, level.length / 2);
+const doorTexture = loadGameTexture('textures/ancient-tech-door.webp');
+const wallMaterial = new THREE.MeshStandardMaterial({ map: wallTexture, roughness: .92, metalness: .08, color: 0xb8ada4 });
+const floorMaterial = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: .96, metalness: .04, color: 0xa9a099 });
+const ceilingMaterial = new THREE.MeshStandardMaterial({ map: ceilingTexture, roughness: 1, color: 0x716a70 });
+const doorMaterial = new THREE.MeshStandardMaterial({ map: doorTexture, roughness: .86, metalness: .28, color: 0xaaa099 });
 
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(level[0].length * TILE, level.length * TILE), floorMaterial);
 floor.rotation.x = -Math.PI / 2;
 floor.position.set((level[0].length - 1) * TILE / 2, 0, (level.length - 1) * TILE / 2);
 scene.add(floor);
 const ceiling = floor.clone();
+ceiling.material = ceilingMaterial;
 ceiling.rotation.x = Math.PI / 2;
 ceiling.position.y = 3.8;
 scene.add(ceiling);
@@ -108,6 +111,8 @@ for (let z = 0; z < level.length; z++) {
     if (cell === 'S') addRune(px, pz);
   }
 }
+
+addAncientTechRelics();
 
 const keys = new Set<string>();
 let yaw = 0;
@@ -184,7 +189,7 @@ function addWall(x: number, z: number) {
 }
 
 function addDoor(x: number, z: number, gridX: number, gridZ: number) {
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(TILE * 0.92, 3.4, 0.45), new THREE.MeshStandardMaterial({ color: 0x381b18, roughness: .8, metalness: .25 }));
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(TILE * 0.92, 3.4, 0.45), doorMaterial);
   mesh.position.set(x, 1.7, z);
   const verticalPassage = level[gridZ - 1]?.[gridX] === '#' && level[gridZ + 1]?.[gridX] === '#';
   if (verticalPassage) mesh.rotation.y = Math.PI / 2;
@@ -620,20 +625,70 @@ function endGame(victory: boolean) {
   startButton.textContent = 'ALOITA UUDELLEEN';
 }
 
-function makeStoneTexture() {
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = 64;
-  const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#50464a'; ctx.fillRect(0, 0, 64, 64);
-  for (let y = 0; y < 64; y += 16) {
-    const offset = (y / 16) % 2 ? 10 : 0;
-    for (let x = -offset; x < 64; x += 22) {
-      ctx.fillStyle = `rgb(${62 + Math.random()*20},${54 + Math.random()*16},${56 + Math.random()*18})`;
-      ctx.fillRect(x + 1, y + 1, 20, 14);
-      ctx.fillStyle = 'rgba(255,220,190,.08)'; ctx.fillRect(x + 2, y + 2, 18, 2);
-    }
+function loadGameTexture(path: string, repeatX = 1, repeatY = 1) {
+  const texture = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}${path}`);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(repeatX, repeatY);
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  return texture;
+}
+
+function addAncientTechRelics() {
+  addDeadDisplay(12, 1.82, 2.03, 0);
+  addDeadDisplay(21.97, 1.58, 8, -Math.PI / 2);
+  addCableBundle(18.2, 1.5, 2.08, 0);
+  addCableBundle(21.92, 1.3, 11.2, -Math.PI / 2);
+}
+
+function addDeadDisplay(x: number, y: number, z: number, rotationY: number) {
+  const group = new THREE.Group();
+  const frame = new THREE.Mesh(
+    new THREE.BoxGeometry(1.45, .88, .13),
+    new THREE.MeshStandardMaterial({ color: 0x302c2a, roughness: .74, metalness: .72 }),
+  );
+  const screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.08, .5),
+    new THREE.MeshStandardMaterial({ color: 0x050607, roughness: .28, metalness: .48, emissive: 0x0b0809, emissiveIntensity: .16 }),
+  );
+  screen.position.z = .071;
+  const led = new THREE.Mesh(
+    new THREE.CircleGeometry(.025, 8),
+    new THREE.MeshBasicMaterial({ color: 0x9a401d }),
+  );
+  led.position.set(.55, -.33, .073);
+  group.add(frame, screen, led);
+  group.position.set(x, y, z);
+  group.rotation.y = rotationY;
+  scene.add(group);
+
+  const standbyGlow = new THREE.PointLight(0x9a3a18, .32, 2.5, 2);
+  standbyGlow.position.set(x, y - .2, z);
+  scene.add(standbyGlow);
+}
+
+function addCableBundle(x: number, y: number, z: number, rotationY: number) {
+  const group = new THREE.Group();
+  const colors = [0x351e26, 0x26322f, 0x2d2522];
+  for (let cable = 0; cable < 3; cable++) {
+    const offset = (cable - 1) * .1;
+    const curve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-.72, .46 + offset, .04),
+      new THREE.Vector3(-.28, .18 + offset, .07),
+      new THREE.Vector3(.12, .22 + offset, .09),
+      new THREE.Vector3(.72, -.42 + offset, .05),
+    ]);
+    const mesh = new THREE.Mesh(
+      new THREE.TubeGeometry(curve, 14, .025, 5, false),
+      new THREE.MeshStandardMaterial({ color: colors[cable], roughness: .82, metalness: .18 }),
+    );
+    group.add(mesh);
   }
-  return new THREE.CanvasTexture(canvas);
+  group.position.set(x, y, z);
+  group.rotation.y = rotationY;
+  scene.add(group);
 }
 
 function makeEnemyTexture() {
