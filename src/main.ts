@@ -33,6 +33,7 @@ const manaEl = document.querySelector<HTMLElement>('#mana')!;
 const keyEl = document.querySelector<HTMLElement>('#key-count')!;
 const messageEl = document.querySelector<HTMLElement>('#message')!;
 const weaponEl = document.querySelector<HTMLElement>('#weapon')!;
+weaponEl.style.setProperty('--weapon-image', `url(${import.meta.env.BASE_URL}weapons/veil-blade.webp)`);
 const minimap = document.querySelector<HTMLCanvasElement>('#minimap')!;
 const minimapCtx = minimap.getContext('2d')!;
 const inventoryElement = document.querySelector<HTMLDivElement>('#inventory')!;

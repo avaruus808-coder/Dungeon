@@ -23,10 +23,10 @@ button:hover { background: #5b1a25; box-shadow: 0 0 28px rgba(148, 35, 57, .5); 
 #message { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); min-width: 300px; padding: 8px 16px; color: #d8c5a0; background: rgba(0,0,0,.45); text-align: center; opacity: 0; transition: opacity .2s; }
 #message.show { opacity: 1; }
 #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(221, 200, 165, .7); font-size: 22px; }
-#weapon { position: absolute; bottom: -5px; left: 50%; width: 210px; height: 180px; transform: translateX(-50%); clip-path: polygon(44% 0, 57% 0, 71% 100%, 25% 100%); background: linear-gradient(90deg, #1b1012 0 32%, #98866b 34% 48%, #c3b18e 50%, #675946 55% 67%, #1b1012 69%); filter: drop-shadow(0 0 8px #000); transform-origin: 50% 100%; }
+#weapon { position: absolute; bottom: -54px; left: 50%; width: min(48vw, 510px); height: min(48vw, 510px); transform: translateX(-50%); background: var(--weapon-image) center bottom / contain no-repeat; filter: drop-shadow(0 8px 12px #000) drop-shadow(0 0 10px rgba(111, 62, 157, .32)); transform-origin: 36% 88%; }
 #weapon.swing { animation: swing .22s ease-in-out; }
-@keyframes swing { 50% { transform: translateX(-50%) rotate(24deg) translateY(18px); } }
-#weapon-name { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); width: 220px; color: #8f7b69; text-align: center; font-size: 10px; }
+@keyframes swing { 50% { transform: translateX(-50%) rotate(18deg) translate(38px, 18px); filter: drop-shadow(0 8px 12px #000) drop-shadow(0 0 18px rgba(146, 79, 209, .62)); } }
+#weapon-name { position: absolute; bottom: 64px; left: 25%; transform: translateX(-50%); width: 220px; color: #a88bc0; text-align: center; font-size: 10px; text-shadow: 0 1px 3px #000, 0 0 8px #5e347c; }
 #keys { position: absolute; left: 24px; top: 24px; color: #8f8176; font-size: 11px; }
 #keys strong { color: #d6b65f; font-size: 18px; }
 #inventory-hint { position: absolute; right: 24px; bottom: 20px; transform: translateY(-58px); color: #756b67; font-size: 10px; letter-spacing: .1em; }
@@ -62,5 +62,6 @@ kbd { display: inline-block; border: 1px solid #776961; padding: 2px 5px; color:
 .item-actions button:disabled { cursor: not-allowed; border-color: #3c3437; color: #51494a; background: #171418; box-shadow: none; }
 .inventory-panel footer { padding: 12px 27px; border-top: 1px solid #3d3034; color: #5f5654; font-size: 9px; }
 @media (max-width: 700px) { .panel { padding: 36px 18px 28px; } .controls { font-size: 10px; } }
+@media (max-width: 700px) { #weapon { bottom: -32px; width: min(64vw, 390px); height: min(64vw, 390px); } #weapon-name { bottom: 45px; } }
 @media (max-width: 700px) { #minimap-frame { width: 160px; height: 142px; } #minimap { width: 160px; height: 122px; } }
 @media (max-width: 700px) { .inventory-body { grid-template-columns: 1fr; } .inventory-left { border-right: 0; border-bottom: 1px solid #3d3034; } .inventory-slots { grid-template-columns: repeat(4, 1fr); } .inventory-slot { min-height: 74px; } #item-details { display: none; } }

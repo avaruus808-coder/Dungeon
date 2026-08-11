@@ -27,10 +27,10 @@ export const ITEMS = {
   },
   rustedBlade: {
     id: 'rusted-blade',
-    name: 'Ruostunut terä',
+    name: 'Verhoterä',
     category: 'weapon',
-    description: 'Vanha rautaterä. Ruosteesta huolimatta sen paino tuntuu kädessä tutulta.',
-    glyph: '†',
+    description: 'Unohdetun sivilisaation kivi-metalliterä. Sen violetti ydin värisee lähellä yliluonnollisia olentoja.',
+    glyph: '⟠',
     maxStack: 1,
     equipSlot: 'weapon',
     effect: { meleeDamage: 24 },
